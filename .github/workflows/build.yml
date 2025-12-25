@@ -125,6 +125,8 @@ jobs:
     needs: build
     if: ${{ !cancelled() }}
     name: Aggregate All Packages
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Download All Artifacts
