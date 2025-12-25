@@ -38,13 +38,6 @@ jobs:
         with:
           ref: main
 
-      - name: Setup Feed Structure
-        run: |
-          mkdir -p feeds/modemmanager-enhanced/modemmanager
-          mkdir -p feeds/modemmanager-enhanced/luci-proto-modemmanager
-          cp -rf modemmanager/* feeds/modemmanager-enhanced/modemmanager/
-          cp -rf luci-proto-modemmanager/* feeds/modemmanager-enhanced/luci-proto-modemmanager/
-
       - name: Build Packages
         uses: openwrt/gh-action-sdk@main
         env:
@@ -53,6 +46,7 @@ jobs:
           PACKAGES: modemmanager luci-proto-modemmanager
           INDEX: 1
           NO_SHFMT_CHECK: 1
+          BUILD_LOG: 1
 
       - name: Organize Artifacts
         run: |
