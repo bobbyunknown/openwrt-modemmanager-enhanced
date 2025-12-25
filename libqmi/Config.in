@@ -27,7 +27,7 @@ choice
 		bool "basic (default)"
 
 	config LIBQMI_COLLECTION_FULL
-		bool "full"
-endchoice
+			bool "full"
+	endchoice
 
 endmenu
