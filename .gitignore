@@ -2,6 +2,7 @@
 .AppleDouble
 .LSOverride
 ._*
+tmp/
 
 # Build and cache directories
 bin/
