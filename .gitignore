@@ -141,3 +141,9 @@ nbproject/
 *.cache
 *.lock
 *.pid
+
+# MACOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
