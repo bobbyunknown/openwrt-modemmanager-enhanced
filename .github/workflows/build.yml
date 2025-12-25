@@ -23,7 +23,7 @@ jobs:
   build:
     permissions:
       contents: write
-    name: Build ${{ matrix.branch }}
+    name: Build ${{ matrix.arch }}-${{ matrix.branch }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -31,6 +31,17 @@ jobs:
         branch:
           - openwrt-24.10
           - openwrt-25.12
+        arch:
+          - x86_64
+          - i386_pentium-mmx
+          - aarch64_cortex-a53
+          - aarch64_cortex-a72
+          - aarch64_generic
+          - arm_cortex-a15_neon-vfpv4
+          - arm_cortex-a9
+          - arm_cortex-a7
+          - mips_24kc
+          - mipsel_74kc
 
     steps:
       - name: Checkout Repository
@@ -42,15 +53,18 @@ jobs:
         uses: openwrt/gh-action-sdk@main
         continue-on-error: false
         env:
-          ARCH: x86_64-${{ matrix.branch }}
+          ARCH: ${{ matrix.arch }}-${{ matrix.branch }}
           FEEDNAME: modemmanager_enhanced
           PACKAGES: libmbim libqmi modemmanager luci-proto-modemmanager
           INDEX: 1
-          V: s
+          #V: s
 
       - name: Organize Artifacts
         run: |
           mkdir -p output
+          branch="${{ matrix.branch }}"
+          branch_suffix="${branch#openwrt-}"
+          arch="${{ matrix.arch }}"
           
           if [ "${{ matrix.branch }}" = "openwrt-24.10" ]; then
             # Copy all .ipk packages
@@ -64,7 +78,9 @@ jobs:
               cd output
               for file in *.ipk; do
                 if [ -f "$file" ]; then
-                  mv "$file" "${file%.ipk}-${{ matrix.branch }}.ipk"
+                  base="${file%.ipk}"
+                  base="${base/openwrt-/}"
+                  mv "$file" "${base}-${branch_suffix}.ipk"
                 fi
               done
             )
@@ -82,7 +98,13 @@ jobs:
               cd output
               for file in *.apk; do
                 if [ -f "$file" ]; then
-                  mv "$file" "${file%.apk}-${{ matrix.branch }}.apk"
+                  base="${file%.apk}"
+                  base="${base/openwrt-/}"
+                  if echo "$base" | grep -q "_all$"; then
+                    mv "$file" "${base}-${branch_suffix}.apk"
+                  else
+                    mv "$file" "${base}-${branch_suffix}-${arch}.apk"
+                  fi
                 fi
               done
             )
@@ -95,7 +117,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: modemmanager-enhanced-${{ matrix.branch }}
+          name: modemmanager-enhanced-${{ matrix.branch }}-${{ matrix.arch }}
           path: output/*
           if-no-files-found: error
 
