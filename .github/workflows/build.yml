@@ -42,22 +42,19 @@ jobs:
         uses: openwrt/gh-action-sdk@main
         env:
           ARCH: x86_64-${{ matrix.branch }}
-          FEEDNAME: modemmanager-enhanced
+          FEEDNAME: modemmanager_enhanced
           PACKAGES: modemmanager luci-proto-modemmanager
           INDEX: 1
-          NO_SHFMT_CHECK: 1
           BUILD_LOG: 1
 
       - name: Organize Artifacts
         run: |
           mkdir -p output
           
-          # For openwrt-24.10: .ipk files
           if [ "${{ matrix.branch }}" = "openwrt-24.10" ]; then
             find bin/packages -name "modemmanager_*.ipk" -exec cp {} output/ \;
             find bin/packages -name "luci-proto-modemmanager_*.ipk" -exec cp {} output/ \;
             
-            # Rename for clarity
             cd output
             for file in *.ipk; do
               if [ -f "$file" ]; then
@@ -66,12 +63,10 @@ jobs:
             done
           fi
           
-          # For SNAPSHOT: .apk files
           if [ "${{ matrix.branch }}" = "SNAPSHOT" ]; then
             find bin/packages -name "modemmanager-*.apk" -exec cp {} output/ \;
             find bin/packages -name "luci-proto-modemmanager-*.apk" -exec cp {} output/ \;
             
-            # Rename for clarity
             cd output
             for file in *.apk; do
               if [ -f "$file" ]; then
@@ -138,14 +133,14 @@ jobs:
             ## 🚀 Installation
             
             ### OpenWRT 24.10 (Stable)
-            ```bash
+            ```
             opkg update
             opkg install modemmanager_*-openwrt-24.10.ipk
             opkg install luci-proto-modemmanager_*-openwrt-24.10.ipk
             ```
             
             ### OpenWRT SNAPSHOT (Latest)
-            ```bash
+            ```
             apk update
             apk add modemmanager-*-SNAPSHOT.apk
             apk add luci-proto-modemmanager-*-SNAPSHOT.apk
