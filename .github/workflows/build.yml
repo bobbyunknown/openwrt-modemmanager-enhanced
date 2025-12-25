@@ -1,0 +1,173 @@
+name: Build ModemManager Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag'
+        required: true
+        default: 'v1.0.0'
+      publish:
+        description: 'Publish to Release?'
+        type: boolean
+        required: true
+        default: true
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    name: Build ${{ matrix.branch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - openwrt-24.10
+          - SNAPSHOT
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Feed Structure
+        run: |
+          mkdir -p feeds/modemmanager-enhanced/modemmanager
+          mkdir -p feeds/modemmanager-enhanced/luci-proto-modemmanager
+          
+          # Copy modemmanager package
+          cp -rf modemmanager/* feeds/modemmanager-enhanced/modemmanager/
+          
+          # Copy luci-proto-modemmanager package
+          cp -rf luci-proto-modemmanager/* feeds/modemmanager-enhanced/luci-proto-modemmanager/
+
+      - name: Build Packages
+        uses: openwrt/gh-action-sdk@main
+        env:
+          ARCH: x86_64-${{ matrix.branch }}
+          FEEDNAME: modemmanager-enhanced
+          PACKAGES: modemmanager luci-proto-modemmanager
+          INDEX: 1
+          NO_SHFMT_CHECK: 1
+
+      - name: Organize Artifacts
+        run: |
+          mkdir -p output
+          
+          # For openwrt-24.10: .ipk files
+          if [ "${{ matrix.branch }}" = "openwrt-24.10" ]; then
+            find bin/packages -name "modemmanager_*.ipk" -exec cp {} output/ \;
+            find bin/packages -name "luci-proto-modemmanager_*.ipk" -exec cp {} output/ \;
+            
+            # Rename for clarity
+            cd output
+            for file in *.ipk; do
+              if [ -f "$file" ]; then
+                mv "$file" "${file%.ipk}-${{ matrix.branch }}.ipk"
+              fi
+            done
+          fi
+          
+          # For SNAPSHOT: .apk files
+          if [ "${{ matrix.branch }}" = "SNAPSHOT" ]; then
+            find bin/packages -name "modemmanager-*.apk" -exec cp {} output/ \;
+            find bin/packages -name "luci-proto-modemmanager-*.apk" -exec cp {} output/ \;
+            
+            # Rename for clarity
+            cd output
+            for file in *.apk; do
+              if [ -f "$file" ]; then
+                mv "$file" "${file%.apk}-${{ matrix.branch }}.apk"
+              fi
+            done
+          fi
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: modemmanager-enhanced-${{ matrix.branch }}
+          path: output/*
+
+  aggregate_packages:
+    needs: build
+    if: ${{ !cancelled() }}
+    name: Aggregate All Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: modemmanager-enhanced-*
+          path: downloaded
+          merge-multiple: true
+
+      - name: List All Files
+        run: ls -lh downloaded
+
+      - name: Upload Combined Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: modemmanager-enhanced-all-packages
+          path: downloaded/*
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
+        if: ${{ inputs.publish == true && github.event_name == 'workflow_dispatch' }}
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          name: ModemManager Enhanced ${{ inputs.tag_name }}
+          body: |
+            # ModemManager Enhanced ${{ inputs.tag_name }}
+            
+            Enhanced ModemManager packages for OpenWRT with auto device path detection and improved LuCI interface.
+            
+            ## ✨ Features
+            
+            - **Auto Device Path Detection**: Automatically detects and updates modem device path after reboot
+            - **Multi-Modem Support**: Supports multiple modems with unique identifier tracking
+            - **Force Connection UI**: Added force_connection option in LuCI Advanced Settings
+            - **Improved Reliability**: Uses ModemManager's device-identifier and IMEI for modem matching
+            
+            ## 📦 Package Details
+            
+            - **modemmanager**: Core protocol handler with auto path detection
+            - **luci-proto-modemmanager**: Enhanced LuCI web interface
+            
+            Available for:
+            - OpenWRT 24.10 (Stable) - `.ipk` format
+            - OpenWRT SNAPSHOT (Latest) - `.apk` format
+            
+            ## 🚀 Installation
+            
+            ### OpenWRT 24.10 (Stable)
+            ```bash
+            opkg update
+            opkg install modemmanager_*-openwrt-24.10.ipk
+            opkg install luci-proto-modemmanager_*-openwrt-24.10.ipk
+            ```
+            
+            ### OpenWRT SNAPSHOT (Latest)
+            ```bash
+            apk update
+            apk add modemmanager-*-SNAPSHOT.apk
+            apk add luci-proto-modemmanager-*-SNAPSHOT.apk
+            ```
+            
+            ## 📖 Documentation
+            
+            Full documentation available at: https://github.com/${{ github.repository }}
+            
+            ## 🐛 Bug Reports
+            
+            Report issues at: https://github.com/${{ github.repository }}/issues
+          files: downloaded/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
