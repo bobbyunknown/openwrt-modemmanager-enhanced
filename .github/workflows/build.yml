@@ -44,7 +44,7 @@ jobs:
         env:
           ARCH: x86_64-${{ matrix.branch }}
           FEEDNAME: modemmanager_enhanced
-          PACKAGES: libmbim modemmanager luci-proto-modemmanager
+          PACKAGES: libmbim libqmi modemmanager luci-proto-modemmanager
           INDEX: 1
           V: s
 
