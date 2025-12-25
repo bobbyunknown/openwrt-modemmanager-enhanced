@@ -391,15 +391,20 @@ mm_auto_update_device_path() {
 		}
 	fi
 	
-	if [ -n "${new_device}" ] && [ "${new_device}" != "${old_device}" ]; then
-		echo "Auto-updating device path: ${old_device} -> ${new_device}"
-		uci_set network "${interface}" device "${new_device}"
-		uci_commit network
+	if [ -n "${new_device}" ]; then
+		if [ "${new_device}" != "${old_device}" ]; then
+			echo "Auto-updating device path: ${old_device} -> ${new_device}"
+			uci_set network "${interface}" device "${new_device}"
+			uci_commit network
+		fi
 		echo "${new_device}"
 		return 0
 	fi
 	
-	return 1
+	# No modem found, return old device and let normal flow handle the error
+	echo "No modem found, keeping old device path"
+	echo "${old_device}"
+	return 0
 }
 
 modemmanager_set_allowed_mode() {
@@ -703,15 +708,9 @@ proto_modemmanager_setup() {
 
 	# Auto-update device path if changed (supports multi-modem)
 	device=$(mm_auto_update_device_path "${interface}" "${device}")
-	[ $? -ne 0 ] && {
-		echo "Failed to resolve modem device"
-		proto_notify_error "${interface}" NO_DEVICE
-		proto_set_available "${interface}" 0
-		return 1
-	}
 
 	# validate that ModemManager is handling the modem at the sysfs path
-	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
+	modemstatus=$(mmcli --modem="${device}" --output-keyvalue 2>/dev/null)
 	modempath=$(modemmanager_get_field "${modemstatus}" "modem.dbus-path")
 	[ -n "${modempath}" ] || {
 		echo "Device not managed by ModemManager"
