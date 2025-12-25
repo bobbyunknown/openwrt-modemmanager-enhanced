@@ -44,7 +44,7 @@ jobs:
         env:
           ARCH: x86_64-${{ matrix.branch }}
           FEEDNAME: modemmanager_enhanced
-          PACKAGES: modemmanager luci-proto-modemmanager
+          PACKAGES: libmbim mbim-utils modemmanager luci-proto-modemmanager
           INDEX: 1
           V: s
 
@@ -53,9 +53,13 @@ jobs:
           mkdir -p output
           
           if [ "${{ matrix.branch }}" = "openwrt-24.10" ]; then
+            # Copy all .ipk packages
+            find bin/packages -name "libmbim_*.ipk" -exec cp {} output/ \;
+            find bin/packages -name "mbim-utils_*.ipk" -exec cp {} output/ \;
             find bin/packages -name "modemmanager_*.ipk" -exec cp {} output/ \;
             find bin/packages -name "luci-proto-modemmanager_*.ipk" -exec cp {} output/ \;
             
+            # Rename with branch suffix
             cd output
             for file in *.ipk; do
               if [ -f "$file" ]; then
@@ -65,9 +69,13 @@ jobs:
           fi
           
           if [ "${{ matrix.branch }}" = "SNAPSHOT" ]; then
+            # Copy all .apk packages
+            find bin/packages -name "libmbim-*.apk" -exec cp {} output/ \;
+            find bin/packages -name "mbim-utils-*.apk" -exec cp {} output/ \;
             find bin/packages -name "modemmanager-*.apk" -exec cp {} output/ \;
             find bin/packages -name "luci-proto-modemmanager-*.apk" -exec cp {} output/ \;
             
+            # Rename with branch suffix
             cd output
             for file in *.apk; do
               if [ -f "$file" ]; then
@@ -130,6 +138,8 @@ jobs:
             
             ## 📦 Package Details
             
+            - **libmbim**: MBIM protocol library (v1.32.0) - Required dependency
+            - **mbim-utils**: Utilities for MBIM modems (mbimcli, mbim-network)
             - **modemmanager**: Core protocol handler with auto path detection
             - **luci-proto-modemmanager**: Enhanced LuCI web interface
             
@@ -141,14 +151,24 @@ jobs:
             
             ### OpenWRT 24.10 (Stable)
             ```
-            opkg update
+            # Upload all packages to router
+            cd /tmp
+            
+            # Install in order (dependencies first)
+            opkg install libmbim_*-openwrt-24.10.ipk
+            opkg install mbim-utils_*-openwrt-24.10.ipk
             opkg install modemmanager_*-openwrt-24.10.ipk
             opkg install luci-proto-modemmanager_*-openwrt-24.10.ipk
             ```
             
             ### OpenWRT SNAPSHOT (Latest)
             ```
-            apk update
+            # Upload all packages to router
+            cd /tmp
+            
+            # Install in order (dependencies first)
+            apk add libmbim-*-SNAPSHOT.apk
+            apk add mbim-utils-*-SNAPSHOT.apk
             apk add modemmanager-*-SNAPSHOT.apk
             apk add luci-proto-modemmanager-*-SNAPSHOT.apk
             ```
