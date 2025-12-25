@@ -3,6 +3,12 @@
 .LSOverride
 ._*
 
+# Build and cache directories
+bin/
+dl/
+feeds_cache/
+build.log
+
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db

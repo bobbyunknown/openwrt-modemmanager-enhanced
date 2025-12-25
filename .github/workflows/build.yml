@@ -30,7 +30,7 @@ jobs:
       matrix:
         branch:
           - openwrt-24.10
-          - SNAPSHOT
+          #- SNAPSHOT
 
     steps:
       - name: Checkout Repository
@@ -44,9 +44,9 @@ jobs:
         env:
           ARCH: x86_64-${{ matrix.branch }}
           FEEDNAME: modemmanager_enhanced
-          PACKAGES: libmbim modemmanager luci-proto-modemmanager
+          PACKAGES: libmbim mbim-utils modemmanager luci-proto-modemmanager
           INDEX: 1
-          #V: s
+          V: s
 
       - name: Organize Artifacts
         run: |
