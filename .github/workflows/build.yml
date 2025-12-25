@@ -30,7 +30,7 @@ jobs:
       matrix:
         branch:
           - openwrt-24.10
-          #- SNAPSHOT
+          - openwrt-25.12
 
     steps:
       - name: Checkout Repository
@@ -60,15 +60,17 @@ jobs:
             find bin/packages -name "luci-proto-modemmanager_*.ipk" -exec cp {} output/ \;
             
             # Rename with branch suffix
-            cd output
-            for file in *.ipk; do
-              if [ -f "$file" ]; then
-                mv "$file" "${file%.ipk}-${{ matrix.branch }}.ipk"
-              fi
-            done
+            (
+              cd output
+              for file in *.ipk; do
+                if [ -f "$file" ]; then
+                  mv "$file" "${file%.ipk}-${{ matrix.branch }}.ipk"
+                fi
+              done
+            )
           fi
           
-          if [ "${{ matrix.branch }}" = "SNAPSHOT" ]; then
+          if [ "${{ matrix.branch }}" = "openwrt-25.12" ]; then
             # Copy all .apk packages
             find bin/packages -name "libmbim-*.apk" -exec cp {} output/ \;
             find bin/packages -name "mbim-utils-*.apk" -exec cp {} output/ \;
@@ -76,12 +78,14 @@ jobs:
             find bin/packages -name "luci-proto-modemmanager-*.apk" -exec cp {} output/ \;
             
             # Rename with branch suffix
-            cd output
-            for file in *.apk; do
-              if [ -f "$file" ]; then
-                mv "$file" "${file%.apk}-${{ matrix.branch }}.apk"
-              fi
-            done
+            (
+              cd output
+              for file in *.apk; do
+                if [ -f "$file" ]; then
+                  mv "$file" "${file%.apk}-${{ matrix.branch }}.apk"
+                fi
+              done
+            )
           fi
           
           echo "Files in output directory:"
@@ -145,7 +149,7 @@ jobs:
             
             Available for:
             - OpenWRT 24.10 (Stable) - `.ipk` format
-            - OpenWRT SNAPSHOT (Latest) - `.apk` format
+            - OpenWRT 25.12 (Latest) - `.apk` format
             
             ## 🚀 Installation
             
@@ -161,16 +165,16 @@ jobs:
             opkg install luci-proto-modemmanager_*-openwrt-24.10.ipk
             ```
             
-            ### OpenWRT SNAPSHOT (Latest)
+            ### OpenWRT 25.12 (Latest)
             ```
             # Upload all packages to router
             cd /tmp
             
             # Install in order (dependencies first)
-            apk add libmbim-*-SNAPSHOT.apk
-            apk add mbim-utils-*-SNAPSHOT.apk
-            apk add modemmanager-*-SNAPSHOT.apk
-            apk add luci-proto-modemmanager-*-SNAPSHOT.apk
+            apk add libmbim-*-openwrt-25.12.apk
+            apk add mbim-utils-*-openwrt-25.12.apk
+            apk add modemmanager-*-openwrt-25.12.apk
+            apk add luci-proto-modemmanager-*-openwrt-25.12.apk
             ```
             
             ## 📖 Documentation
