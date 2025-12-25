@@ -35,16 +35,14 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Setup Feed Structure
         run: |
           mkdir -p feeds/modemmanager-enhanced/modemmanager
           mkdir -p feeds/modemmanager-enhanced/luci-proto-modemmanager
-          
-          # Copy modemmanager package
           cp -rf modemmanager/* feeds/modemmanager-enhanced/modemmanager/
-          
-          # Copy luci-proto-modemmanager package
           cp -rf luci-proto-modemmanager/* feeds/modemmanager-enhanced/luci-proto-modemmanager/
 
       - name: Build Packages
