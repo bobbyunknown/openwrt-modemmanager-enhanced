@@ -40,12 +40,13 @@ jobs:
 
       - name: Build Packages
         uses: openwrt/gh-action-sdk@main
+        continue-on-error: false
         env:
           ARCH: x86_64-${{ matrix.branch }}
           FEEDNAME: modemmanager_enhanced
           PACKAGES: modemmanager luci-proto-modemmanager
           INDEX: 1
-          BUILD_LOG: 1
+          V: s
 
       - name: Organize Artifacts
         run: |
@@ -74,12 +75,17 @@ jobs:
               fi
             done
           fi
+          
+          echo "Files in output directory:"
+          ls -lh output/
 
       - name: Upload Artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: modemmanager-enhanced-${{ matrix.branch }}
           path: output/*
+          if-no-files-found: error
 
   aggregate_packages:
     needs: build
@@ -102,6 +108,7 @@ jobs:
         with:
           name: modemmanager-enhanced-all-packages
           path: downloaded/*
+          if-no-files-found: error
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v1
