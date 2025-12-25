@@ -46,7 +46,7 @@ jobs:
           FEEDNAME: modemmanager_enhanced
           PACKAGES: libmbim mbim-utils modemmanager luci-proto-modemmanager
           INDEX: 1
-          V: s
+          #V: s
 
       - name: Organize Artifacts
         run: |
